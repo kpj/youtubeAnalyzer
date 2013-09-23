@@ -5,10 +5,4 @@ def is_upper_case(string):
 	return True
 
 def apply(comments, args):
-	upper = []
-
-	for com in comments:
-		if is_upper_case(com["text"]):
-			upper.append(com)
-
-	return upper
+	return [com for com in comments if is_upper_case(com["text"])]
