@@ -9,13 +9,9 @@ from pprint import pprint
 import filters
 
 
-def getJson(url):
-	return simplejson.load(urllib.urlopen(url))
-
 class YoutubeVideo(object):
 	def __init__(self, url):
 		self.id = re.findall(r'www.youtube.com/watch\?v=(.*)', url)[0]
-		self.data = getJson('http://gdata.youtube.com/feeds/api/videos/%s?alt=json&v=2' % self.id)
 
 		self.comments = None
 
