@@ -59,17 +59,17 @@ class YoutubeVideo(object):
 
 		return self.comments
 
-	def applyFilter(self, filter, args=None):
+	def applyFilter(self, filter, *args):
 		if self.comments == None:
 			self.get_comments()
-		return filter.apply(self.comments, args)
+		return filter.apply(self.comments, *args)
 
 
 vid = YoutubeVideo(sys.argv[1])
 
 pprint(vid.applyFilter(filters.all_caps))
 print vid.applyFilter(filters.average_comment_length)
-pprint(vid.applyFilter(filters.scan_for_regexp, ["[Mm]inecraft"]))
+pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
 pprint(vid.applyFilter(filters.highest_vote))
 pprint(vid.applyFilter(filters.show_downvoted))
-pprint(vid.applyFilter(filters.scan_wordlist, [os.path.join("filters", "data", "smileys.txt"), True]))
+pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))

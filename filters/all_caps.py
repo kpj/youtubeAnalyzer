@@ -4,5 +4,5 @@ def is_upper_case(string):
 			return False
 	return True
 
-def apply(comments, args):
+def apply(comments):
 	return [com for com in comments if is_upper_case(com["text"])]

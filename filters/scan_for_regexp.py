@@ -1,4 +1,5 @@
 import re
 
-def apply(comments, args):
-	return [com for com in comments if re.search(args[00], com["text"]) != None]
+def apply(comments, regexp):
+	print regexp
+	return [com for com in comments if re.search(regexp, com["text"]) != None]
