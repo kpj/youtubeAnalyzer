@@ -27,7 +27,6 @@ class YoutubeVideo(object):
 
 					# check if comment was deleted
 					if dat.find("p").find("em") == None:
-
 						# find text
 						text = ""
 						container = dat.find("div", {"class": "comment-text"})
@@ -72,4 +71,5 @@ pprint(vid.applyFilter(filters.all_caps))
 print vid.applyFilter(filters.average_comment_length)
 pprint(vid.applyFilter(filters.scan_for_regexp, ["[Mm]inecraft"]))
 pprint(vid.applyFilter(filters.highest_vote))
+pprint(vid.applyFilter(filters.show_downvoted))
 #pprint(vid.applyFilter(filters.scan_wordlist, [os.path.join("filters", "data", "insults.txt"), True]))
