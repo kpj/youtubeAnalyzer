@@ -2,12 +2,58 @@ import sys
 import re
 import urllib
 import os, os.path
-import simplejson
+import json
 from bs4 import BeautifulSoup
 from pprint import pprint
 
 import filters
 
+
+class YoutubeChannel(object):
+    def __init__(self, name):
+        self.id = name
+
+        self.chunk_size = 50
+
+        self.videos = None
+
+    def get_all_vids(self, index):
+        com_data_url = "http://gdata.youtube.com/feeds/api/users/%s/uploads?max-results=%i&start-index=%i&alt=json" % (self.id, self.chunk_size, index)
+        cont = urllib.urlopen(com_data_url).read()
+        data = json.loads(cont)
+       
+        vids = data["feed"]["entry"]
+
+        more_vids = list()
+        if len(vids) == self.chunk_size:
+            # grab 'em all
+            more_vids = self.get_all_vids(index + self.chunk_size)
+
+        return vids + more_vids
+
+    def parse_videos(self):
+        if self.videos != None:
+            return self.videos
+
+        raw_videos = self.get_all_vids(1)
+
+        res = []
+        for v in raw_videos:
+            cur = dict()
+
+            cur["title"] = v["title"]["$t"]
+            cur["rating"] = v["gd$rating"]["average"]
+            cur["views"] = v["yt$statistics"]["viewCount"]
+            cur["published"] = v["published"]["$t"]
+
+            res.append(cur)
+
+        return res
+
+    def apply_filter(self, filter, *args):
+        if self.videos == None:
+            self.videos = self.parse_videos()
+        return filter.apply(self.videos, *args)
 
 class YoutubeVideo(object):
     def __init__(self, url):
@@ -65,11 +111,14 @@ class YoutubeVideo(object):
         return filter.apply(self.comments, *args)
 
 
-vid = YoutubeVideo(sys.argv[1])
+#vid = YoutubeVideo(sys.argv[1])
 
-pprint(vid.applyFilter(filters.all_caps))
-print vid.applyFilter(filters.average_comment_length)
-pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
-pprint(vid.applyFilter(filters.highest_vote))
-pprint(vid.applyFilter(filters.show_downvoted))
-pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))
+#pprint(vid.applyFilter(filters.all_caps))
+#print vid.applyFilter(filters.average_comment_length)
+#pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
+#pprint(vid.applyFilter(filters.highest_vote))
+#pprint(vid.applyFilter(filters.show_downvoted))
+#pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))
+
+chan = YoutubeChannel(sys.argv[1])
+pprint(chan.apply_filter(filters.gameone))
