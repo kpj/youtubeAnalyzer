@@ -17,7 +17,7 @@ class YoutubeChannel(object):
 
         self.videos = None
 
-    def get_all_vids(self, index):
+    def get_all_vids(self, index=1):
         com_data_url = "http://gdata.youtube.com/feeds/api/users/%s/uploads?max-results=%i&start-index=%i&alt=json" % (self.id, self.chunk_size, index)
         cont = urllib.urlopen(com_data_url).read()
         data = json.loads(cont)
@@ -32,10 +32,7 @@ class YoutubeChannel(object):
         return vids + more_vids
 
     def parse_videos(self):
-        if self.videos != None:
-            return self.videos
-
-        raw_videos = self.get_all_vids(1)
+        raw_videos = self.get_all_vids()
 
         res = []
         for v in raw_videos:
@@ -61,58 +58,43 @@ class YoutubeVideo(object):
 
         self.comments = None
 
-    def get_comments(self, page_num=1):
-        if self.comments == None:
-            self.comments = []
+        self.chunk_size = 50
 
-            for p in range(1, page_num + 1):
-                com_data_url = "http://www.youtube.com/all_comments?v=%s&page=%i" % (self.id, p)
-                soup = BeautifulSoup(urllib.urlopen(com_data_url))
-                for dat in soup.findAll("div", {"class": "content clearfix"}):
-                    cur_com = {}
+    def get_all_coms(self, index=1):
+        com_data_url = "https://gdata.youtube.com/feeds/api/videos/%s/comments?orderby=published&alt=json&max-results=%i&start-index=%i" % (self.id, self.chunk_size, index)
+        cont = urllib.urlopen(com_data_url).read()
+        data = json.loads(cont)
 
-                    # check if comment was deleted
-                    if dat.find("p").find("em") == None:
-                        # find text
-                        text = ""
-                        container = dat.find("div", {"class": "comment-text"})
-                        if container.find("p") != None:
-                            text = container.find("p").text
-                        else:
-                            text = container.text
+        coms = data["feed"]["entry"]
 
-                        # find author
-                        meta = dat.find("p", {"class": "metadata"})
-                        author = meta.find("span", {"class": "author"}).find("a").text
+        more_coms = list()
+        if len(coms) == self.chunk_size:
+            # grab 'em all
+            more_coms = self.get_all_coms(index + self.chunk_size)
 
-                        # find additional info
-                        action = dat.find("div", {"class": "comment-actions"})
-                        upvotes_data = action.find("span", {"class": "comments-rating-positive"})
-                        upvotes = 0
-                        downvotes = 0
-                        if upvotes_data != None:
-                            m = re.match(r'\D*?(\d+)\D*?(\d+)\D*?', upvotes_data.get("title"))
-                            upvotes = int(m.groups()[0])
-                            downvotes = int(m.groups()[1])
+        return coms + more_coms
 
-                        # throw it all together
-                        cur_com["text"] = text
-                        cur_com["author"] = author
-                        cur_com["upvotes"] = upvotes
-                        cur_com["downvotes"] = downvotes
+    def parse_comments(self):
+        raw_comments = self.get_all_coms()
 
-                        self.comments.append(cur_com)
+        res = []
+        for c in raw_comments:
+            cur = dict()
 
-        return self.comments
+            cur["text"] = c["content"]["$t"]
+            cur["author"] = c["author"][0]["name"]["$t"]
+
+            res.append(cur)
+
+        return res
 
     def applyFilter(self, filter, *args):
         if self.comments == None:
-            self.get_comments()
+            self.comments = self.parse_comments()
         return filter.apply(self.comments, *args)
 
 
 #vid = YoutubeVideo(sys.argv[1])
-
 #pprint(vid.applyFilter(filters.all_caps))
 #print vid.applyFilter(filters.average_comment_length)
 #pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
@@ -120,5 +102,5 @@ class YoutubeVideo(object):
 #pprint(vid.applyFilter(filters.show_downvoted))
 #pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))
 
-chan = YoutubeChannel(sys.argv[1])
-pprint(chan.apply_filter(filters.gameone))
+#chan = YoutubeChannel(sys.argv[1])
+#pprint(chan.apply_filter(filters.gameone))
