@@ -44,7 +44,6 @@ class YoutubeChannel(object):
             cur["published"] = v["published"]["$t"]
 
             res.append(cur)
-
         return res
 
     def apply_filter(self, filter, *args):
@@ -53,8 +52,8 @@ class YoutubeChannel(object):
         return filter.apply(self.videos, *args)
 
 class YoutubeVideo(object):
-    def __init__(self, url):
-        self.id = re.findall(r'www.youtube.com/watch\?v=(.*)', url)[0]
+    def __init__(self, id):
+        self.id = id
 
         self.comments = None
 
@@ -85,7 +84,6 @@ class YoutubeVideo(object):
             cur["author"] = c["author"][0]["name"]["$t"]
 
             res.append(cur)
-
         return res
 
     def applyFilter(self, filter, *args):
@@ -94,13 +92,22 @@ class YoutubeVideo(object):
         return filter.apply(self.comments, *args)
 
 
-#vid = YoutubeVideo(sys.argv[1])
-#pprint(vid.applyFilter(filters.all_caps))
-#print vid.applyFilter(filters.average_comment_length)
-#pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
-#pprint(vid.applyFilter(filters.highest_vote))
-#pprint(vid.applyFilter(filters.show_downvoted))
-#pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print "Usage: %s <video id/channel name>" % sys.argv[0]
+        sys.exit(1)
 
-#chan = YoutubeChannel(sys.argv[1])
-#pprint(chan.apply_filter(filters.gameone))
+    query = re.findall(r'www.youtube.com/watch\?v=(.*)', sys.argv[1])
+    if len(query) == 1:
+        vid = YoutubeVideo(query[0])
+        pprint(vid.applyFilter(filters.all_caps))
+        print vid.applyFilter(filters.average_comment_length)
+        pprint(vid.applyFilter(filters.scan_for_regexp, "[Mm]inecraft"))
+        #pprint(vid.applyFilter(filters.highest_vote))
+        #pprint(vid.applyFilter(filters.show_downvoted))
+        pprint(vid.applyFilter(filters.scan_wordlist, os.path.join("filters", "data", "smileys.txt"), True))
+    elif len(query) == 0:
+        chan = YoutubeChannel(sys.argv[1])
+        pprint(chan.apply_filter(filters.gameone))
+    else:
+        print "Weird input!"
